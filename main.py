@@ -2,12 +2,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from transformers import pipeline
 
-app = FastAPI(title="Sentiment Analysis API")
-
-# Use lightweight model (important for deployment)
 sentiment_pipeline = pipeline(
     "sentiment-analysis",
-    model="distilbert-base-uncased-finetuned-sst-2-english"
+    model="sshleifer/tiny-distilbert-base-uncased-finetuned-sst-2-english"
 )
 
 class TextInput(BaseModel):
