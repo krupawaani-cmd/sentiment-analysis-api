@@ -2,9 +2,15 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from transformers import pipeline
 
+app = FastAPI(title="Sentiment API")
+
+# Load model safely
+MODEL_NAME = "distilbert-base-uncased-finetuned-sst-2-english"
+
 sentiment_pipeline = pipeline(
     "sentiment-analysis",
-    model="sshleifer/tiny-distilbert-base-uncased-finetuned-sst-2-english"
+    model=MODEL_NAME,
+    tokenizer=MODEL_NAME
 )
 
 class TextInput(BaseModel):
@@ -12,12 +18,12 @@ class TextInput(BaseModel):
 
 @app.get("/")
 def home():
-    return {"message": "API is running 🚀"}
+    return {"message": "API running 🚀"}
 
 @app.post("/analyze")
-def analyze_sentiment(data: TextInput):
+def analyze(data: TextInput):
     if not data.text.strip():
-        return {"error": "Empty input not allowed"}
+        return {"error": "Empty input"}
 
     result = sentiment_pipeline(data.text)
 
@@ -26,6 +32,3 @@ def analyze_sentiment(data: TextInput):
         "prediction": result[0]["label"],
         "confidence": round(result[0]["score"], 4)
     }
-@app.post("/analyze-batch")
-def analyze_batch(texts: list[str]):
-    return sentiment_pipeline(texts)
