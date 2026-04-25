@@ -1,34 +1,43 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from transformers import pipeline
+import requests
+import os
 
-app = FastAPI(title="Sentiment API")
+app = FastAPI(title="Sentiment Analysis API 🚀")
 
-# Load model safely
-MODEL_NAME = "distilbert-base-uncased-finetuned-sst-2-english"
+# Hugging Face API
+API_URL = "https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english"
 
-sentiment_pipeline = pipeline(
-    "sentiment-analysis",
-    model=MODEL_NAME,
-    tokenizer=MODEL_NAME
-)
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+headers = {
+    "Authorization": f"Bearer {HF_TOKEN}"
+}
 
 class TextInput(BaseModel):
     text: str
 
 @app.get("/")
 def home():
-    return {"message": "API running 🚀"}
+    return {"message": "API is running 🚀"}
 
 @app.post("/analyze")
 def analyze(data: TextInput):
     if not data.text.strip():
-        return {"error": "Empty input"}
+        return {"error": "Empty input not allowed"}
 
-    result = sentiment_pipeline(data.text)
+    response = requests.post(
+        API_URL,
+        headers=headers,
+        json={"inputs": data.text}
+    )
+
+    if response.status_code != 200:
+        return {"error": "Model API failed", "details": response.text}
+
+    result = response.json()
 
     return {
         "input": data.text,
-        "prediction": result[0]["label"],
-        "confidence": round(result[0]["score"], 4)
+        "result": result
     }
